@@ -14,7 +14,11 @@
 
 package errorsx
 
-import "time"
+import (
+	"encoding/json"
+	"net/http"
+	"time"
+)
 
 // JsonErrorResponse represents a RFC 7807 compliant, JSON-based REST API error response.
 type JsonErrorResponse struct {
@@ -25,6 +29,19 @@ type JsonErrorResponse struct {
 	Detail    string                 `json:"detail,omitempty"` // A human-readable explanation of this specific error.
 	Instance  string                 `json:"instance"`         // A URI reference that identifies this error's occurrence.
 	Extra     map[string]interface{} `json:"extra,omitempty"`  // Any additional metadata to accompany the error.
+}
+
+// WriteToHttp writes a JsonErrorResponse to a http.ResponseWriter.
+func (j JsonErrorResponse) WriteToHttp(w http.ResponseWriter) {
+	js, err := json.Marshal(j)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Write(js)
 }
 
 // New creates a new Rfc 7807 compliant error, represented as a JSON response.
